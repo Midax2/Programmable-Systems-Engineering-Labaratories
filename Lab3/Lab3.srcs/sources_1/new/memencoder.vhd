@@ -43,7 +43,6 @@ end memencoder;
 architecture Behavioral of memencoder is
     signal digit_reg : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
 
-    -- Function to convert binary to 7-segment encoding
     function hex_to_7seg(hex: STD_LOGIC_VECTOR(3 downto 0)) return STD_LOGIC_VECTOR is
     begin
         case hex is
@@ -70,20 +69,17 @@ begin
     process(clk_i)
     begin
         if rising_edge(clk_i) then
-            -- Update digits when buttons are pressed
             if btn_i(0) = '1' then digit_reg(7 downto 0)   <= hex_to_7seg(sw_i(3 downto 0)); end if;
             if btn_i(1) = '1' then digit_reg(15 downto 8)  <= hex_to_7seg(sw_i(3 downto 0)); end if;
             if btn_i(2) = '1' then digit_reg(23 downto 16) <= hex_to_7seg(sw_i(3 downto 0)); end if;
             if btn_i(3) = '1' then digit_reg(31 downto 24) <= hex_to_7seg(sw_i(3 downto 0)); end if;
 
-            -- Set decimal points independently
-            digit_reg(7)  <= sw_i(4); -- DP for AN0
-            digit_reg(15) <= sw_i(5); -- DP for AN1
-            digit_reg(23) <= sw_i(6); -- DP for AN2
-            digit_reg(31) <= sw_i(7); -- DP for AN3
+            digit_reg(7)  <= sw_i(4);
+            digit_reg(15) <= sw_i(5);
+            digit_reg(23) <= sw_i(6);
+            digit_reg(31) <= sw_i(7);
         end if;
     end process;
 
-    -- Output the stored digits
     digit_o <= digit_reg;
 end Behavioral;

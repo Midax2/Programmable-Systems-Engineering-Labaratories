@@ -43,23 +43,22 @@ end display;
 
 architecture Behavioral of display is
     signal clk_div : INTEGER := 0;
+    signal clk_reset : INTEGER := 10;
     signal anode_sel : INTEGER range 0 to 3 := 0;
     signal digit_out : STD_LOGIC_VECTOR(7 downto 0);
 begin
     process(clk_i)
     begin
         if rising_edge(clk_i) then
-            -- Clock Divider for 1 kHz Multiplexing
-            if clk_div = 99999 then
+            if clk_div = clk_reset then
                 clk_div <= 0;
-                anode_sel <= (anode_sel + 1) mod 4; -- Rotate between digits
+                anode_sel <= (anode_sel + 1) mod 4;
             else
                 clk_div <= clk_div + 1;
             end if;
         end if;
     end process;
 
-    -- Assign segment output based on active anode
     process(anode_sel, digit_i)
     begin
         case anode_sel is
@@ -71,11 +70,10 @@ begin
         end case;
     end process;
 
-    -- Output signals
     led7_seg_o <= digit_out;
-    led7_an_o  <= "1111" when rst_i = '1' else
+    led7_an_o  <= "0000" when rst_i = '1' else
                   "1110" when anode_sel = 0 else
                   "1101" when anode_sel = 1 else
                   "1011" when anode_sel = 2 else
-                  "0111"; -- Active-low anode control
+                  "0111";
 end Behavioral;
