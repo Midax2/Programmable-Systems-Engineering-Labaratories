@@ -4,4 +4,4 @@
 *.sim
 *.xpr
 *.runs
-/ip
+\ip
