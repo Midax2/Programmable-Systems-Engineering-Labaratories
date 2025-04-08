@@ -24,7 +24,6 @@ use IEEE.NUMERIC_STD.ALL;
 entity trmt is
     Port (
         clk_i            : in  STD_LOGIC;
-        rst_i            : in  STD_LOGIC;
         data_i           : in  STD_LOGIC_VECTOR(7 downto 0);
         TXD_enable_i     : in  STD_LOGIC;  -- Start transmission
         TXD_is_working_o : out STD_LOGIC;  -- Transmission in progress
@@ -34,54 +33,59 @@ end trmt;
 
 architecture Behavioral of trmt is
 
-    type state_type is (IDLE, START_BIT, DATA_BITS, STOP_BIT);
-    signal state        : state_type := IDLE;
-    signal bit_counter  : integer range 0 to 9 := 0;
-    signal baud_counter : integer := 0;
-    signal tx_shift_reg : STD_LOGIC_VECTOR(9 downto 0) := (others => '1');
-    signal is_sending  : STD_LOGIC := '0';
+    type state_type is (standby, sending);  
+	signal state : state_type := standby;
+	
+	signal sending_bit : STD_LOGIC := '1';
+	signal bits_transmitted : Integer := 0;
+	
+	signal counter : Integer := 0;
+	
+	signal is_working : STD_LOGIC := '0';
 
-    constant BAUD_DIVISOR : integer := 5208;  -- Adjust based on clock frequency
 
 begin
 
-    TXD_o            <= tx_shift_reg(0);
-    TXD_is_working_o <= is_sending;
+    TXD_o            <= sending_bit;
+    TXD_is_working_o <= is_working;
 
-    process (clk_i, rst_i)
+    process (clk_i)
     begin
-        if rst_i = '1' then
-            state        <= IDLE;
-            tx_shift_reg <= (others => '1');
-            bit_counter  <= 0;
-            baud_counter <= 0;
-            is_sending   <= '0';
-        elsif rising_edge(clk_i) then
+        if rising_edge(clk_i) then
             case state is
-                when IDLE =>
-                    if TXD_enable_i = '1' then
-                        tx_shift_reg <= '1' & data_i & '0';  -- Start + Data + Stop bit
-                        bit_counter  <= 0;
-                        baud_counter <= 0;
-                        is_sending   <= '1';
-                        state        <= START_BIT;
-                    end if;
+			when standby =>
+				if TXD_enable_i = '1' and is_working = '0' then
+					
+					is_working <= '1';			
+					sending_bit <= '0';
+					counter <= 0;
+					bits_transmitted <= 0;
+					
+					state <= sending;
+					
+				elsif counter < 10418 then
+					counter <= counter + 1;
+				else 
+					is_working <= '0';
+				end if;
+			
+			when sending =>
+				if counter < 5209 then
+					counter <= counter + 1;
+				elsif bits_transmitted < 8 then
+					counter <= 0;
+					sending_bit <= data_i(bits_transmitted);
+					bits_transmitted <= bits_transmitted + 1;
+				else 
+					
+					sending_bit <= '1';
+					counter <= 0;
+					
+					state <= standby;
+					
+				end if;
+		end case;
 
-                when START_BIT | DATA_BITS | STOP_BIT =>
-                    if baud_counter < BAUD_DIVISOR then
-                        baud_counter <= baud_counter + 1;
-                    else
-                        baud_counter <= 0;
-                        tx_shift_reg <= '1' & tx_shift_reg(9 downto 1);
-                        bit_counter  <= bit_counter + 1;
-
-                        if bit_counter = 9 then
-                            state      <= IDLE;
-                            is_sending <= '0';
-                        end if;
-                    end if;
-            end case;
         end if;
     end process;
-
 end Behavioral;

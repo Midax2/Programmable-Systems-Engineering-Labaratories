@@ -6,7 +6,6 @@ use IEEE.NUMERIC_STD.ALL;
 entity Display_Controller is
     Port (
         clk_i : in STD_LOGIC;              
-        rst_i : in STD_LOGIC;              
         data_i : in STD_LOGIC_VECTOR(7 downto 0); 
         led7_an_o : out STD_LOGIC_VECTOR(3 downto 0); 
         led7_seg_o : out STD_LOGIC_VECTOR(7 downto 0) 
@@ -39,15 +38,11 @@ architecture Behavioral of Display_Controller is
     signal digit_index : integer range 0 to 1 := 0;
     signal clk_div : integer := 0;
     constant CLK_DIV_MAX : integer := 100_000;
-
 begin
     process(clk_i)
     begin
         if rising_edge(clk_i) then
-            if rst_i = '1' then
-                clk_div <= 0;
-                digit_index <= 0;
-            elsif clk_div = CLK_DIV_MAX then
+            if clk_div = CLK_DIV_MAX then
                 clk_div <= 0;
                 digit_index <= 1 - digit_index;
             else

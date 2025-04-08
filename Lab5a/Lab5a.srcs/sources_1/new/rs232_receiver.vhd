@@ -6,7 +6,6 @@ use IEEE.NUMERIC_STD.ALL;
 entity RS232_Receiver is
     Port (
         clk_i : in STD_LOGIC;              -- 100 MHz clock
-        rst_i : in STD_LOGIC;              -- Asynchronous reset
         RXD_i : in STD_LOGIC;              -- RS232 input
         data_o : out STD_LOGIC_VECTOR(7 downto 0); -- Received data output
         data_ready_o : out STD_LOGIC       -- Data ready signal
@@ -26,17 +25,11 @@ architecture Behavioral of RS232_Receiver is
     signal RXD_TEMP : STD_LOGIC;
 
 begin
-    
     process(clk_i)
     begin
         if rising_edge(clk_i) then
             RXD_TEMP <= RXD_i;
-            if rst_i = '1' then
-                clk_count <= 0;
-                bit_index <= 0;
-                receiving <= '0';
-                data_ready <= '0';
-            elsif receiving = '0' and RXD_TEMP = '0' then
+            if receiving = '0' and RXD_TEMP = '0' then
                 receiving <= '1';
                 clk_count <= CLKS_PER_BIT / 2; 
                 bit_index <= 0;
